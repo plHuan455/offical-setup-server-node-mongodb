@@ -1,27 +1,49 @@
 @baseUrl = http://localhost:8080/api
-@user1 = 634ccc87743f5e00a4b30ed8
-@user2 = 634cdf43ff2315c37be3ced0
+@user1 = 634e156111bf9d0adb966c1b
+@user2 = 634e15ebf6bde15a7d3a6c0e
 @groupSlug = test-group-1
+@groupId = 634e26d2fdbce69315cedaea
+@pendingId = 634e285adb584dc0ad7313d4
+
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2MzRlMTU2MTExYmY5ZDBhZGI5NjZjMWIiLCJpc0FkbWluIjpmYWxzZSwiaWF0IjoxNjY2MDgyNTA1fQ.YGIaLLvAbD_ZiHYurGm08KSIVZGUOfhJcLoZbhlW8Eg
 
 #### USER ####
-### create
-POST {{baseUrl}}/user/create
+### Login
+POST {{baseUrl}}/user/login
 Content-Type: application/json
 
 {
-  "fullname": "Phạm Long Huân 2",
-  "username": "plhuan2",
-  "email": "plhuan4552@gmail.com",
+  "username": "plhuan",
   "password": "Kelkifa123"
 }
+### Register
+POST {{baseUrl}}/user/register
+Content-Type: application/json
 
-###
+{
+  "username": "plhuan2",
+  "password": "Kelkifa123",
+  "email": "plhuan4552@gmail.com",
+  "fullname": "Pham Long Huan2"
+}
+
+### Set Admin
 PATCH  {{baseUrl}}/user/set-admin
 Content-Type: application/json
 
 {
   "userId": "{{user1}}"
 }
+
+### Check username
+POST {{baseUrl}}/user/check-username
+Content-Type: application/json
+
+{
+  "username": "plhuan3"
+}
+### Check email
+
 
 #### GROUP ####
 ### create
@@ -62,6 +84,7 @@ Content-Type: application/json
 
 ### Get groups
 GET {{baseUrl}}/group/get-groups
+Authorization: bearer {{token}}
 Content-Type: application/json
 
 {
@@ -101,24 +124,45 @@ Content-Type: application/json
 {
   "userId": "{{user2}}",
   "isAccept": true,
-  "inviteId": "634d269cc50fb5f2e3ee1f24"
+  "inviteId": "634e5366fcb7a5b2432e422b"
 }
 
 #### AUTH ####
-### Login
-POST {{baseUrl}}/auth/login
+
+#### PENDING ####
+### Get
+GET {{baseUrl}}/pending/get-pending/{{groupSlug}}?month=11&year=2022
 Content-Type: application/json
 
 {
-  "username": "plhuan",
-  "password": "Kelkifa123"
+  "userId": "{{user2}}"
 }
-### Register
-POST {{baseUrl}}/auth/register
+### Create
+POST {{baseUrl}}/pending/create
 Content-Type: application/json
 
 {
-  "password": "Kelkifa123",
-  "email": "plhuan4552@gmail.com",
-  "fullname": "Pham Long Huan2"
+  "content": "test pending 2",
+  "date": "Wed Nov 02 2022 00:00:00 GMT+0700 (Indochina Time)",
+  "money": 1000000,
+  "bank": "Vietcombank",
+  "groupId": "{{groupId}}",
+  "userId": "{{user2}}"
+}
+### Update
+PATCH {{baseUrl}}/pending/update
+Content-Type: application/json
+
+{
+  "content": "test pending new",
+  "userId": "{{user1}}",
+  "pendingId": "{{pendingId}}"
+}
+
+### Delete
+DELETE {{baseUrl}}/pending/delete-pending/634e285adb584dc0ad7313d4
+Content-Type: application/json
+
+{
+  "userId": "{{user2}}"
 }

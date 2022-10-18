@@ -55,7 +55,7 @@ class GroupController {
         }
       ])
 
-      return returnStatus(res, 200);
+      return returnStatus(res, 200, response);
     } catch (err) {
       console.log('[GROUP GET GROUPS ERROR]', err);
       return returnStatus(res, 500 );

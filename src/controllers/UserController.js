@@ -1,24 +1,79 @@
+import { createToken } from "../cores/handleToken.js";
 import returnStatus from "../cores/returnStatus.js";
 import UserModel from "../models/user.js";
 class UserController {
   /**
-   * Create user
-   * POST /api/user/create
-   * BODY { fullname, username, password, email}
+   * Login
+   * POST /api/user/login
+   * BODY { username, password }
    */
-  async create(req, res) {
-    const { fullname, username, password, email } = req.body;
-    if (!fullname || !username || !password || !email) return returnStatus(res, 400);
+   async login(req, res) {
+    const {username, password} = req.body;
 
-    try {
-      await UserModel.create({
-        fullname, username, email, password
-      })
-      return returnStatus(res, 200);
-    }
-    catch (err) {
-      console.log('[USER CREATE ERR]', err);
+    if(!username || !password) return returnStatus(res, 400);
+
+    try{
+       const user = await UserModel.findOne({username, password});
+       if(!user) return returnStatus(res, 403);
+
+       const jwtToken = await createToken({userId: user._id, isAdmin: user.isAdmin});
+
+       return returnStatus(res, 200, {token: jwtToken});
+
+    }catch(err){
+      console.log('[USER LOGIN ERROR]', err);
       return returnStatus(res, 500);
+    }
+  }
+
+  /**
+   * Register
+   * POST /api/user/register
+   * BODY { username, password, email, fullname }
+   */
+  async register(req, res){
+    const {username, password, email, fullname} = req.body;
+    try{
+      if(!username || !password || !email || !fullname) return returnStatus(res, 400);
+      await UserModel.create({username, password, email, fullname});
+      return returnStatus(res, 200);
+    }catch(err){
+      console.log('[USER REGISTER ERROR', err);
+      return returnStatus(res, 500);
+    }
+  }
+  /**
+   * Check username
+   * POST /api/user/check-username
+   * BODY { username }
+   */
+  async checkUsername(req, res) {
+    const { username } = req.body;
+    try{
+      const foundUser = await UserModel.exists({username});
+      if(!foundUser) return returnStatus(res, 404);
+
+      return returnStatus(res, 200);
+    }catch(err){
+      console.log('[USER CHECK USERNAME ERROR]', err);
+      return returnStatus(res, 500);
+    }
+  }
+
+  /**
+   * Check email
+   * POST /api/user/check-email
+   * BODY { email }
+   */
+  async checkEmail(req, res) {
+    const { email } = req.body;
+    try{ 
+      const foundUser = await UserModel.exists({email});
+      if(!foundUser) return returnStatus(res, 404);
+
+      return returnStatus(res, 200);
+    }catch(err){
+      console.log('[USER CHECK EMAIL ERROR]', err);
     }
   }
 
@@ -30,7 +85,7 @@ class UserController {
    async setAdmin(req, res) {
     const { userId } = req.body;
     try{
-      const response = await UserModel.updateOne({ id: userId }, { isAdmin: true });
+      await UserModel.updateOne({ id: userId }, { isAdmin: true });
       return returnStatus(res, 200);
     }catch(err){
       console.log('[USER SET ADMIN ERROR]', err);

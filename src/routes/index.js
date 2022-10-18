@@ -1,15 +1,13 @@
 import groupRouter from "./group.js";
 import userRouter from "./user.js";
-import authRouter from "./auth.js";
+// import authRouter from "./auth.js";
+import pendingRouter from "./pending.js";
+import tokenMidleware from "../midlewares/tokenMidleware.js";
 
 function router(app) {
-    // app.use('/api/auth', authRouter)
-    // app.use('/api/group', groupRouter);
-    // app.use('/api/note', getTokenDataMidleware, noteRouter);
-    // app.use('/api/todo', getTokenDataMidleware, todoRouter);
-    app.use('/api/auth', authRouter)
+    app.use('/api/pending', tokenMidleware, pendingRouter);
     app.use('/api/user', userRouter);
-    app.use('/api/group', groupRouter);
+    app.use('/api/group', tokenMidleware, groupRouter);
 }
 
 

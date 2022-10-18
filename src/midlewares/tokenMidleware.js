@@ -1,24 +1,24 @@
 import { verifyToken } from "../cores/handleToken.js";
+import returnStatus from "../cores/returnStatus.js";
 
-function getTokenDataMidleware(req, res, next) {
+function tokenMidleware(req, res, next) {
     req.body.userId = undefined;
     const authHeader = req.header('Authorization');
     const token = authHeader && authHeader.split(' ')[1];
-    // console.log(token);
 
     if (!token) {
-        return next();
+        return returnStatus(res, 401);
     }
 
     const tokenInfo = verifyToken(token);
     // console.log(tokenInfo);
     // console.log(tokenInfo);
     if (tokenInfo.error) {
-        return res.status(401).json({ success: false, message: 'invalid token' })
+        return returnStatus(res, 401);
     }
 
     req.body.userId = tokenInfo.data?.userId;
 
     return next();
 }
-export default getTokenDataMidleware;
+export default tokenMidleware;
