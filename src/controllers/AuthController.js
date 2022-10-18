@@ -1,3 +1,50 @@
+import returnStatus from '../cores/returnStatus.js';
+import UserModel from '../models/user.js';
+
+class AuthController {
+  /**
+   * Login
+   * POST /api/auth/login
+   * BODY { username, password }
+   */
+  async login(req, res) {
+    const {username, password} = req.body;
+
+    if(!username || !password) return returnStatus(res, 400);
+
+    try{
+       const user = await UserModel.findOne({username, password});
+       if(!user) return returnStatus(res, 403);
+
+       return returnStatus(res, 200);
+
+    }catch(err){
+      console.log('[AUTH LOGIN ERROR]', err);
+      return returnStatus(res, 500);
+    }
+  }
+
+  /**
+   * Register
+   * POST /api/auth/register
+   * BODY { username, password, email, fullname }
+   */
+  async register(req, res){
+    const {username, password, email, fullname} = req.body;
+    try{
+      if(!username || !password || !email || !fullname) return returnStatus(res, 400);
+      await UserModel.create({username, password, email, fullname});
+      return returnStatus(res, 200);
+    }catch(err){
+      console.log('[AUTH REGISTER ERROR', err);
+      return returnStatus(res, 500);
+    }
+  }
+
+}
+
+export default new AuthController;
+
 // import { createRefreshToken, createToken, verifyToken } from '../cores/handleToken.js';
 
 // import GroupMemberModel from "../models/groupMember.js";

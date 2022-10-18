@@ -1,232 +1,322 @@
-// import { DEMO_GROUP_TYPE } from "../../globalVariables.js";
-// import GroupInviteModel from "../models/groupInvite.js";
-// import GroupMemberModel from "../models/groupMember.js";
-// import GroupModel from "../models/group.js";
-// import UserModel from "../models/user.js";
-// import mongoose from "mongoose";
+import mongoose from 'mongoose';
+import GroupModel from '../models/group.js';
+import MemberModel from '../models/member.js';
+import InviteModel from '../models/invite.js';
+import returnStatus from '../cores/returnStatus.js';
 
-// class GroupController {
-//     async AlwaysChange(req, res) {
-//         let response = "";
-//         try {
-//             const response = await GroupInviteModel.deleteMany();
-//             return res.json({ success: true, message: 'successfully', response });
-//         } catch (err) {
-//             console.log(err);
-//             return res.json({ success: false, message: 'internal server' });
-//         }
-//     }
-//     /**
-//      * [GET] /api/group/get
-//      * Get all group of user by userId
-//      * @param {*} req 
-//      * @param {*} res 
-//      */
-//     async Get(req, res) {
-//         const { userId } = req.body;
+class GroupController {
+  /** Create a group
+   * POST /api/group/create
+   * BODY { userId, name, description, avatarImg }
+   */
+  async create(req, res) {
+    const { userId, name, description, avatarImg } = req.body;
+    try {
+      if (!userId || !name) return returnStatus(res, 400);
+      const newGroup = await GroupModel.create({
+        name, description, avatarImg, adminId: userId
+      })
+      await MemberModel.create({
+        userId,
+        groupId: newGroup._id
+      })
+      return returnStatus(res, 200);
+    } catch (err) {
+      console.log(err);
+      return returnStatus( res, 500);
+    }
+  }
 
-//         try {
-//             const response = await GroupModel.aggregate([
-//                 {
-//                     $lookup: {
-//                         from: 'group_members',
-//                         foreignField: 'groupId',
-//                         localField: '_id',
-//                         as: 'groups'
-//                     }
-//                 },
-//                 {
-//                     $match: {
-//                         $or: [{ type: DEMO_GROUP_TYPE }, { "groups.userId": mongoose.Types.ObjectId(userId) }]
-//                     }
-//                 },
-//                 {
-//                     $project: {
-//                         updatedAt: 0,
-//                         createdAt: 0,
-//                         groups: 0
-//                     }
-//                 }
-//             ])
+  /** 
+   * Get groups
+   * GET /api/group/get-groups
+   * BODY { userId }
+   */
+  async getGroups(req, res) {
+    const { userId } = req.body;
+    try {
+      if (!userId) return res.returnStatus(res, 400);
+      const response = await GroupModel.aggregate([
+        {
+          $lookup: {
+            from: 'members',
+            foreignField: 'groupId',
+            localField: '_id',
+            as: 'members'
+          }
+        }, {
+          $match: {
+            'members.userId': mongoose.Types.ObjectId(userId)
+          }
+        }, {
+          $project: {
+            members: 0
+          }
+        }
+      ])
 
-//             return res.json({ success: true, message: 'success', response });
+      return returnStatus(res, 200);
+    } catch (err) {
+      console.log('[GROUP GET GROUPS ERROR]', err);
+      return returnStatus(res, 500 );
+    }
 
-//         } catch (err) {
-//             console.log(`[DOC GET GROUP ERR]`, err);
-//             return res.json({ success: false, message: 'internal server' });
-//         }
-//     }
+  }
 
-//     async GetMember(req, res) {
-//         const { userId, groupId } = req.body;
+  /**
+   * Delete group
+   * DELETE /api/group/delete-group/:slug
+   * BODY { userId }
+   */
+  async deleteGroup(req, res) {
+    const { userId } = req.body;
+    const { slug } = req.params;
 
-//         try {
-//             const isUserInGroup = await GroupMemberModel.findOne({ groupId, userId });
-//             if (!isUserInGroup) return res.json({ success: false, message: 'Bạn không trong nhóm này' });
+    if (!userId || !slug) return returnStatus(res, 400);
 
-//             const response = await GroupMemberModel.find({ groupId }).populate({ path: 'userId', select: 'username' }).select('-_id -groupId');
+    try {
+      const foundGroup = await GroupModel.findOne({ adminId: userId, slug });
+      if (!foundGroup) return returnStatus(res, 403);
 
-//             return res.json({ success: true, message: 'success', response });
-//         } catch (err) {
-//             console.log(err);
-//             return res.json({ success: false, message: 'internal server' });
-//         }
-//     }
+      await GroupModel.delete({ slug });
 
-//     // [DELETE] /api/group/delete-member
-//     async DeleteMember(req, res) {
-//         const { userId, groupId, memberId } = req.body;
-//         if (!userId || !memberId || !groupId || userId === memberId) return res.json({ success: false, message: 'bad request' });
+      return returnStatus(res, 200);
+    } catch (err) {
+      console.log('[GROUP DELETE ERROR]', err);
+      return returnStatus(res, 500);
+    }
 
-//         try {
-//             const groupResponse = await GroupModel.findOne({ _id: groupId, adminId: userId });
-//             if (!groupResponse) return res.json({ success: false, message: 'Bạn không có quyền xóa thành viên' });
-
-//             const deleteResponse = await GroupMemberModel.deleteOne({ groupId, userId: memberId });
-//             if (deleteResponse.deletedCount === 0) {
-//                 return res.json({ success: false, message: 'Xóa không thành công' });
-//             }
-//             return res.json({ success: true, message: 'success' });
-//         } catch (err) {
-//             console.log(err);
-//             return res.json({ success: false, message: 'internal server' });
-//         }
-
-//     }
-//     /**
-//     * [POST] /api/group/create
-//     * Create a new group
-//     * @param {*} req req.body = {name: String, username : {type: Array, desc: Array of user in group}}
-//     * @param {*} res 
-//     */
-
-//     async Create(req, res) {
-//         const { userId, name } = req.body;
-//         if (!userId) return res.json({ success: false, message: 'Bạn cần đăng nhập' });
-
-//         if (!name) return res.json({ success: false, message: 'bad request' });
-
-//         try {
-//             const userResponse = await UserModel.findOne({ _id: userId }).populate('rankId').select("_id rankId");
-//             const groupCount = await GroupModel.count({ adminId: userId });
-//             // if(groupCount )
-//             if (groupCount >= userResponse.rankId.groupLimit) {
-//                 return res.json({ success: false, message: `Nhóm được tạo đã đạt tối đa (${userResponse.rankId.groupLimit})` })
-//             }
-//             // console.log(userResponse);
-//             if (!userResponse) return res.json({ success: false, message: 'Người dùng không tồn tại' });
-
-//             const newGroup = new GroupModel({
-//                 _id: mongoose.Types.ObjectId(),
-//                 name,
-//                 adminId: mongoose.Types.ObjectId(userId),
-//                 type: 'user'
-//             })
-//             const newMember = new GroupMemberModel({
-//                 groupId: newGroup._id,
-//                 userId: mongoose.Types.ObjectId(userId),
-//             })
-//             const response = await Promise.all([GroupModel.create(newGroup), GroupMemberModel.create(newMember)]);
-
-//             // if (!response._id) return res.json({ success: false, message: 'internal server' });
-//             return res.json({ success: true, message: 'success', response: response[0] });
-//         } catch (err) {
-//             console.log(`[create group err]`, err);
-//             return res.json({ success: false, message: 'internal server' });
-//         }
-//     }
-
-//     /**
-//      * [DELETE] /api/group/delete
-//      */
-//     async Delete(req, res) {
-//         const { userId, groupId } = req.body;
-//         if (!userId || !groupId) return res.json({ success: false, message: 'bad request' });
+  }
 
 
-//         return res.json({ success: false, message: 'internal server' })
-//     }
+  /**
+   * Add Member
+   * POST /api/group/add-member/:slug
+   * BODY { userId }
+   */
+  async addMember(req, res) {
+    const { userId } = req.body;
+    const { slug } = req.params;
+    if (!userId || !slug) return returnStatus(res, 400);
 
-//     /**
-//      * [POST] /api/groups/addMember
-//      * 
-//      * @param {*} req : {userId: String, users: Array};
-//      * @param {*} res 
-//      * @return add members to group by groupId
-//      */
+    try {
+      const foundGroup = await GroupModel.findOne({ slug });
+      if (!foundGroup)
+        return res.status(400).json({ message: 'Bad Request' });
 
-//     async Invite(req, res) {
-//         const { userId, groupId, username } = req.body;
+      await MemberModel.create({
+        userId,
+        groupId: foundGroup._id
+      })
 
-//         if (!userId || !groupId) return res.json({ success: false, message: 'bad request' });
+      return returnStatus(res, 200);
+    } catch (err) {
+      console.log('[Group Add Member Error]', err);
+      return returnStatus(res, 500);
+    }
+  }
 
-//         try {
-//             const [foundMember, foundGroup] = await Promise.all([UserModel.findOne({ username }).select("_id"), GroupModel.findOne({ adminId: userId, _id: groupId }).populate('adminId')]);
-//             if (!foundGroup) return res.json({ success: false, message: 'Bạn không có quyền thêm thành viên' })
-//             if (!foundMember) return res.json({ success: false, message: 'Không tìm thấy người này' })
+  /**
+   * Get Member
+   * GET /api/group/get-members/:slug
+   * BODY { userId }
+   */
+  async getMembers(req, res) {
+    const { userId } = req.body;
+    const { slug } = req.params;
+    if (!userId || !slug) return returnStatus(res, 400);
+    try {
+      const response = await MemberModel.aggregate([
+        {
+          $lookup: {
+            from: 'groups',
+            foreignField: '_id',
+            localField: 'groupId',
+            as: 'groups'
+          }
+        }, {
+          $match: {
+            'groups.slug': slug
+          }
+        }, {
+          $lookup: {
+            from: 'users',
+            foreignField: '_id',
+            localField: 'userId',
+            as: 'users'
+          }
+        }, {
+          $replaceRoot: { newRoot: { $mergeObjects: [{ $arrayElemAt: ["$users", 0] }, "$$ROOT"] } }
+        }, {
+          $project: {
+            groups: 0,
+            deleted: 0,
+            users: 0,
+            __v: 0,
+            password: 0,
+            isAdmin: 0,
+            groupId: 0,
+          }
+        }
+      ])
+      return returnStatus(res, 200, response);
+    } catch (err) {
+      console.log('[GROUP GET MEMBERS]', err);
+      return returnStatus(500, res);
+    }
+  }
 
-//             const [inviteRes, memberRes] = await Promise.all([
-//                 GroupInviteModel.findOne({ userId: foundMember._id, groupId }),
-//                 GroupMemberModel.findOne({ userId: foundMember._id, groupId })
-//             ])
-//             if (memberRes) return res.json({ success: false, message: "Người nay đã trong nhóm" })
-//             if (inviteRes) return res.json({ success: false, message: 'Bạn đã gửi lời mời đến người này rồi' })
+  /**
+   * Delete Member
+   * DELETE /api/group/delete-member/:slug
+   * BODY { userId, deletedMemberId }
+   */
+  async deleteMember(req, res) {
+    const { userId, deletedMemberId } = req.body;
+    const { slug } = req.params;
 
-//             const response = await GroupInviteModel.create({ groupId, userId: foundMember._id });
+    if (!userId || !slug || !deletedMemberId) return returnStatus(res, 400);
 
-//             if (!response._id) return res.json({ success: false, message: 'internal server error' });
+    try {
+      const foundGroup = await GroupModel.aggregate([
+        {
+          $lookup: {
+            from: 'members',
+            foreignField: 'groupId',
+            localField: '_id',
+            as: 'members'
+          }
+        }, {
+          $match: {
+            "members.userId": mongoose.Types.ObjectId(deletedMemberId),
+            slug,
+            adminId: mongoose.Types.ObjectId(userId)
+          }
+        }
+      ]);
+      if (foundGroup.length === 0) return returnStatus(res, 403);
+      await MemberModel.deleteOne({ userId: deletedMemberId });
+      return returnStatus(res, 200);
 
-//             const invite = { _id: response._id, userInvite: foundGroup.adminId.username, groupName: foundGroup.name }
+    } catch (err) {
+      console.log('[GROUP DELETE MEMBER ERROR]', err);
+      return returnStatus(res, 500);
+    }
+  }
 
-//             io.emit(`invite:${foundMember._id}`, invite);
+  /**
+   * Get invites
+   * GET /api/group/get-invites
+   * BODY { userId }
+   */
+  async getInvites(req, res) {
+    const { userId } = req.body;
+    if (!userId) return returnStatus(res, 400);
 
-//             return res.json({ success: true, message: 'success' })
-//         } catch (err) {
-//             console.log(`[GROUP INVITE ERR]`, err);
-//             return res.json({ success: false, message: 'internal server' })
-//         }
+    try {
+      // const response = await InviteModel.find({userId}).populate('groupId');
+      const response = await InviteModel.aggregate([{
+        $lookup: {
+          from: "groups",
+          localField: 'groupId',
+          foreignField: '_id',
+          as: 'groups',
+        }
+      }, {
+        $project: {
+          group: { $arrayElemAt: ["$groups", 0] },
+        }
+      }, {
+        $project: {
+          "group.description": 0,
+          "group.deleted": 0,
+          "group.createdAt": 0,
+          "group.updatedAt": 0,
+        }
+      }
+      ])
 
-//     }
-//     // [POST] /api/group/out-group
-//     async OutGroup(req, res) {
-//         const { userId, groupId } = req.body;
+      return returnStatus(res, 200, response);
+    } catch (err) {
+      console.log('[GROUP GET INVITE ERROR]', err);
+      return returnStatus(res, 500);
+    }
+  }
 
-//         if (!userId || !groupId) return res.json({ success: false, message: 'bad request' });
-//         try {
-//             const isAdmin = await GroupModel
-//                 .findOne({ _id: groupId, adminId: userId })
-//                 .select('_id');
+  /**
+   *  Invite Member
+   * POST /api/group/invite/:slug
+   * BODY { userId, inviteMemberId }
+   */
+  async invite(req, res) {
+    const { userId, inviteMemberId } = req.body;
+    const { slug } = req.params;
+    if (!userId || !slug || !inviteMemberId) return returnStatus(res, 400);
 
-//             if (isAdmin) return res.json({ success: false, message: "bad request" });
+    try {
+      // const foundGroup = await GroupModel.findOne({ adminId: userId, slug });
+      const foundGroup = await GroupModel.aggregate([{
+        $lookup: {
+          from: 'members',
+          foreignField: 'groupId',
+          localField: '_id',
+          as: 'members'
+        },
+      }, {
+        $match: {
+          "members.userId": { $ne: mongoose.Types.ObjectId(inviteMemberId) },
+          slug
+        }
+      }, {
+        $project: {
+          members: 0
+        }
+      }
+      ])
+      if (foundGroup.length === 0) return returnStatus(res, 403);
 
+      await InviteModel.deleteMany({ userId: inviteMemberId, groupId: foundGroup[0]._id })
+      await InviteModel.create({
+        userId: inviteMemberId,
+        groupId: foundGroup[0]._id
+      })
 
-//             const deleteResponse = await GroupMemberModel.deleteOne({ groupId, userId })
+      return returnStatus(res, 200);
+    } catch (err) {
+      console.log('[GROUP INVITE ERROR]', err);
+      return returnStatus(res, 500);
+    }
+  }
 
-//             if (deleteResponse.deletedCount === 0) return res.json({ success: false, message: 'Forbidden' });
+  /**
+   * Rep invite
+   * POST /api/group/reply-invite
+   * BODY { userId, inviteId, isAccept}
+   */
+  async repInvite(req, res) {
+    const { userId, inviteId, isAccept } = req.body;
+    if (!userId || !inviteId) return returnStatus(res, 400);
 
-//             return res.json({ success: true, message: 'success' });
-//         } catch (err) {
-//             console.log(err);
-//             return res.json({ success: false, message: 'internal server' });
-//         }
-//     }
+    try {
+      const foundInvite = await InviteModel.findOne({ _id: inviteId, userId });
+      if (!foundInvite) return returnStatus(res, 403);
 
+      if (isAccept) {
+        await MemberModel.create({
+          groupId: foundInvite.groupId,
+          userId: foundInvite.userId
+        });
+      }
+      await InviteModel.deleteOne({ _id: inviteId });
 
-//     // [DELETE] /api/group/delete
-//     async Delete(req, res) {
-//         const { userId, groupId } = req.body;
-//         try {
-//             const deleteGroupResponse = await GroupModel.deleteOne({ adminId: userId, groupId, type: 'user' });
-//             if (deleteGroupResponse.deletedCount === 0) return res.json({ success: false, message: 'Xóa nhóm thất bại' });
-//             await GroupMemberModel.deleteMany({ groupId });
+      return returnStatus(res, 200);
+    } catch (err) {
+      console.log('[GROUP REP INVITE ERROR]', err);
+      return returnStatus(res, 500);
+    }
 
-//             return res.json({ success: true, message: 'success' });
-//         } catch (err) {
-//             console.log(err);
+  }
 
-//             return res.json({ success: false, message: 'internal server' });
+}
 
-//         }
-//     }
-// }
-// export default new GroupController;
+export default new GroupController;

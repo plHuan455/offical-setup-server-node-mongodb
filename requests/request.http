@@ -1,0 +1,124 @@
+@baseUrl = http://localhost:8080/api
+@user1 = 634ccc87743f5e00a4b30ed8
+@user2 = 634cdf43ff2315c37be3ced0
+@groupSlug = test-group-1
+
+#### USER ####
+### create
+POST {{baseUrl}}/user/create
+Content-Type: application/json
+
+{
+  "fullname": "Phạm Long Huân 2",
+  "username": "plhuan2",
+  "email": "plhuan4552@gmail.com",
+  "password": "Kelkifa123"
+}
+
+###
+PATCH  {{baseUrl}}/user/set-admin
+Content-Type: application/json
+
+{
+  "userId": "{{user1}}"
+}
+
+#### GROUP ####
+### create
+POST {{baseUrl}}/group/create
+Content-Type: application/json
+
+{
+  "userId": "{{user1}}",
+  "name": "test group 1",
+  "description": "mo ta group 1",
+  "avatarImg": "https://picsum.photos/300/200"
+}
+
+### Add member 
+POST {{baseUrl}}/group/add-member/{{groupSlug}}
+Content-Type: application/json
+
+{
+  "userId": "{{user1}}"
+}
+
+### Get members
+GET {{baseUrl}}/group/get-members/{{groupSlug}}
+Content-Type: application/json
+
+{
+  "userId": "{{user1}}"
+}
+
+### Delete member
+DELETE {{baseUrl}}/group/delete-member/{{groupSlug}}
+Content-Type: application/json
+
+{
+  "userId": "{{user1}}",
+  "deletedMemberId": "{{user2}}"
+}
+
+### Get groups
+GET {{baseUrl}}/group/get-groups
+Content-Type: application/json
+
+{
+  "userId": "{{user1}}"
+}
+
+### Delete group
+DELETE {{baseUrl}}/group/delete-group/{{groupSlug}}
+Content-Type: application/json
+
+{
+  "userId": "{{user1}}"
+}
+
+### Get invites
+GET {{baseUrl}}/group/get-invites
+Content-Type: application/json
+
+{
+  "userId": "{{user2}}"
+}
+
+
+### Invite member
+POST {{baseUrl}}/group/invite/{{groupSlug}}
+Content-Type: application/json
+
+{
+  "userId": "{{user1}}",
+  "inviteMemberId": "{{user2}}"
+}
+
+### Rep Invite
+POST {{baseUrl}}/group/reply-invite
+Content-Type: application/json
+
+{
+  "userId": "{{user2}}",
+  "isAccept": true,
+  "inviteId": "634d269cc50fb5f2e3ee1f24"
+}
+
+#### AUTH ####
+### Login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "username": "plhuan",
+  "password": "Kelkifa123"
+}
+### Register
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "password": "Kelkifa123",
+  "email": "plhuan4552@gmail.com",
+  "fullname": "Pham Long Huan2"
+}

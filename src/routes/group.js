@@ -1,15 +1,16 @@
-// import GroupController from "../controllers/GroupController.js";
-// import express from "express";
-// import getTokenDataMidleware from "../midlewares/getTokenDataMidleware.js"
+import GroupController from "../controllers/GroupController.js";
+import express from "express";
 
-// const groupRouter = express.Router();
+const groupRouter = express.Router();
 
-// groupRouter.get('/always-change', GroupController.AlwaysChange);
-// groupRouter.get('/get', getTokenDataMidleware, GroupController.Get);
-// groupRouter.post('/invite', getTokenDataMidleware, GroupController.Invite);
-// groupRouter.post('/create', getTokenDataMidleware, GroupController.Create);
-// groupRouter.post('/get-members', getTokenDataMidleware, GroupController.GetMember);
-// groupRouter.post('/out', getTokenDataMidleware, GroupController.OutGroup);
-// groupRouter.delete('/delete-member', getTokenDataMidleware, GroupController.DeleteMember);
-// groupRouter.delete('/delete-group', getTokenDataMidleware, GroupController.Delete);
-// export default groupRouter;
+groupRouter.post('/create', GroupController.create);
+groupRouter.post('/add-member/:slug', GroupController.addMember);
+groupRouter.post('/invite/:slug', GroupController.invite);
+groupRouter.post('/reply-invite', GroupController.repInvite);
+groupRouter.delete('/delete-member/:slug', GroupController.deleteMember);
+groupRouter.delete('/delete-group/:slug', GroupController.deleteGroup);
+groupRouter.get('/get-invites', GroupController.getInvites);
+groupRouter.get('/get-members/:slug', GroupController.getMembers);
+groupRouter.get('/get-groups', GroupController.getGroups);
+
+export default groupRouter;
