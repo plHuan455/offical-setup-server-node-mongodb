@@ -50,9 +50,35 @@ class GroupController {
           }
         }, {
           $project: {
-            members: 0
+            _id: 1,
+            name: 1,
+            description: 1,
+            avatarImg: 1,
+            adminId: 1,
+            slug: 1,
+            members: {
+              $slice: ['$members' , 2],
+            },
           }
-        }
+        }, {
+          $lookup: {
+            from: 'users',
+            foreignField: '_id',
+            localField: 'members.userId',
+            as: 'members'
+          }
+        }, {
+          $project : {
+            _id: 0,
+            id: '$_id',
+            name: 1,
+            description: 1,
+            avatarImg: 1,
+            adminId: 1,
+            slug: 1,
+            "members.fullname": 1
+          }
+        }, 
       ])
 
       return returnStatus(res, 200, response);

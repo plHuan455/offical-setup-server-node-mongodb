@@ -1,7 +1,7 @@
 import { verifyToken } from "../cores/handleToken.js";
 import returnStatus from "../cores/returnStatus.js";
 
-function tokenMidleware(req, res, next) {
+function tokenMiddleware(req, res, next) {
     req.body.userId = undefined;
     const authHeader = req.header('Authorization');
     const token = authHeader && authHeader.split(' ')[1];
@@ -21,4 +21,4 @@ function tokenMidleware(req, res, next) {
 
     return next();
 }
-export default tokenMidleware;
+export default tokenMiddleware;

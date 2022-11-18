@@ -1,19 +1,23 @@
 @baseUrl = http://localhost:8080/api
-@user1 = 634e156111bf9d0adb966c1b
+@user1 = 637201f84e339acf48b47d25
 @user2 = 634e15ebf6bde15a7d3a6c0e
-@groupSlug = test-group-1
+@groupSlug = nhom-test-2
 @groupId = 634e26d2fdbce69315cedaea
 @pendingId = 634e285adb584dc0ad7313d4
 
-@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2MzRlMTU2MTExYmY5ZDBhZGI5NjZjMWIiLCJpc0FkbWluIjpmYWxzZSwiaWF0IjoxNjY2MDgyNTA1fQ.YGIaLLvAbD_ZiHYurGm08KSIVZGUOfhJcLoZbhlW8Eg
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2MzcyMDFmODRlMzM5YWNmNDhiNDdkMjUiLCJpc0FkbWluIjpmYWxzZSwiaWF0IjoxNjY4NDg2MjUwfQ.t-0_tksY-wuqMmJU9iewtLwF-rTP8u0XHlI1h2zHUYw
+@token2 = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2MzczMWIxZmQ5ZWIwZmUyYTBhMWQxYjUiLCJpc0FkbWluIjpmYWxzZSwiaWF0IjoxNjY4NDg4MTMzfQ.L0KiPHxzXp5PL-FGY14YqLyQmpgCBef8AP6zOUQtsNM
 
 #### USER ####
+### Get user info
+GEt {{baseUrl}}/user/info
+Authorization: bearer {{token}}
 ### Login
 POST {{baseUrl}}/user/login
 Content-Type: application/json
 
 {
-  "username": "plhuan",
+  "username": "plhuan2",
   "password": "Kelkifa123"
 }
 ### Register
@@ -24,7 +28,7 @@ Content-Type: application/json
   "username": "plhuan2",
   "password": "Kelkifa123",
   "email": "plhuan4552@gmail.com",
-  "fullname": "Pham Long Huan2"
+  "fullName": "Pham Long Huan2"
 }
 
 ### Set Admin
@@ -48,6 +52,7 @@ Content-Type: application/json
 #### GROUP ####
 ### create
 POST {{baseUrl}}/group/create
+Authorization: bearer {{token}}
 Content-Type: application/json
 
 {
@@ -59,14 +64,11 @@ Content-Type: application/json
 
 ### Add member 
 POST {{baseUrl}}/group/add-member/{{groupSlug}}
-Content-Type: application/json
-
-{
-  "userId": "{{user1}}"
-}
+Authorization: bearer {{token2}}
 
 ### Get members
 GET {{baseUrl}}/group/get-members/{{groupSlug}}
+Authorization: bearer {{token}}
 Content-Type: application/json
 
 {
@@ -87,17 +89,10 @@ GET {{baseUrl}}/group/get-groups
 Authorization: bearer {{token}}
 Content-Type: application/json
 
-{
-  "userId": "{{user1}}"
-}
-
 ### Delete group
 DELETE {{baseUrl}}/group/delete-group/{{groupSlug}}
+Authorization: bearer {{token}}
 Content-Type: application/json
-
-{
-  "userId": "{{user1}}"
-}
 
 ### Get invites
 GET {{baseUrl}}/group/get-invites
