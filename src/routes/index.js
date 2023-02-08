@@ -8,6 +8,7 @@ function router(app) {
     app.use('/api/pending', tokenMiddleware, pendingRouter);
     app.use('/api/user', userRouter);
     app.use('/api/group', tokenMiddleware, groupRouter);
+    app.use('/', (req, res)=> { return res.json({success: true})});
 }
 
 
