@@ -8,6 +8,6 @@ router.post('/login', UserController.login);
 router.post('/register', UserController.register);
 router.post('/check-username', UserController.checkUsername);
 router.post('/check-email', UserController.checkEmail);
-router.get('/info', tokenMiddleware, UserController.getUserData);
+router.get('/', tokenMiddleware, UserController.getUserData);
 
 export default router;

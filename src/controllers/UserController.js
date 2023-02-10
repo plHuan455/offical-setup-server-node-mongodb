@@ -4,14 +4,14 @@ import UserModel from "../models/user.js";
 class UserController {
   /**
    * Get User Data 
-   * GET /api/user/info
+   * GET /api/user
    */
   async getUserData(req, res) {
     const { userId } = req.body;
     if(!userId);
     try{
-      const response = await UserModel.findOne({_id: userId}).select('_id username email fullName');
-      return returnStatus(res, 200, {email: response.email, username: response.username, fullName: response.fullName});      
+      const response = await UserModel.findOne({_id: userId}).select('_id username email fullname');
+      return returnStatus(res, 200, response);      
     }catch(err){
       console.log(`[USER GET USER DATA ERR]`, err);
       return returnStatus(res, 500);
