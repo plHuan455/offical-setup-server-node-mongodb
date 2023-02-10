@@ -6,7 +6,7 @@ import GroupModel from '../models/group.js';
 class PendingController {
   /**
    * Create a pending
-   * POST /api/pending/create-pending/:slug
+   * POST /api/pending
    * BODY { userId, groupId, content, date, money, bank }
    */
   async create(req, res) {
@@ -101,20 +101,19 @@ class PendingController {
 
   /**
    * GET pending
-   * GET /api/pending/get-pending/:groupSlug?month&year
+   * GET /api/pending?groupId&month&year
    * BODY { userId }
    */
   async get(req, res) {
     const { userId } = req.body;
-    const { groupSlug } = req.params;
-    const { month, year } = req.query;
+    const { month, year, groupId } = req.query;
 
-    if (!userId || !groupSlug) return returnStatus(res, 400);
+    if (!userId || !groupId) return returnStatus(res, 400);
     try {
       const foundGroup = await GroupModel.aggregate([
         {
           $match: {
-            slug: groupSlug
+            _id: mongoose.Types.ObjectId(groupId)
           }
         }, {
           $lookup: {
@@ -134,12 +133,16 @@ class PendingController {
         }
       ])
       if (!foundGroup[0]) return returnStatus(res, 403);
-      const pendingRes = await PendingModel.find({$expr: { 
-        $and: [
-          {$eq: [{$month: "$date"}, month]},
-          {$eq: [{$year: "$date"}, year]}
-        ]
-      }});
+      const pendingRes = await PendingModel.find({ 
+        groupId, 
+        $expr: { 
+          $and: [
+            {$eq: [{$month: "$date"}, month]},
+            {$eq: [{$year: "$date"}, year]}
+          ]
+        }
+      });
+      
       return returnStatus(res, 200, pendingRes);  
     } catch (err) {
       console.log('[GET PENDING ERROR]', err);

@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import GroupModel from '../models/group.js';
 import MemberModel from '../models/member.js';
+import UserModel from '../models/user.js';
 import InviteModel from '../models/invite.js';
 import returnStatus from '../cores/returnStatus.js';
 
@@ -18,9 +19,10 @@ class GroupController {
       })
       await MemberModel.create({
         userId,
-        groupId: newGroup._id
+        groupId: newGroup._id,
+        isAdmin: true
       })
-      return returnStatus(res, 200);
+      return returnStatus(res, 200, );
     } catch (err) {
       console.log(err);
       return returnStatus( res, 500);
@@ -29,7 +31,7 @@ class GroupController {
 
   /** 
    * Get groups
-   * GET /api/group/get-groups
+   * GET /api/group
    * BODY { userId }
    */
   async getGroups(req, res) {
@@ -69,8 +71,7 @@ class GroupController {
           }
         }, {
           $project : {
-            _id: 0,
-            id: '$_id',
+            // id: '$_id',
             name: 1,
             description: 1,
             avatarImg: 1,
@@ -90,8 +91,26 @@ class GroupController {
   }
 
   /**
+   * GET GROUP BY SLUG
+   * GET /api/group/:slug
+   */
+  async getGroup(req, res) {
+    const {userId} = req.body;
+    const {slug} = req.params;
+
+    try {
+      const response = await GroupModel.findOne({slug})
+      return returnStatus(res, 200, response);
+    }
+    catch(err){
+      console.log('[GROUP GET GROUP BY SLUG ERROR]', err);
+      return returnStatus(res, 500);
+    }
+  }
+
+  /**
    * Delete group
-   * DELETE /api/group/delete-group/:slug
+   * DELETE /api/group/:slug
    * BODY { userId }
    */
   async deleteGroup(req, res) {
@@ -101,10 +120,9 @@ class GroupController {
     if (!userId || !slug) return returnStatus(res, 400);
 
     try {
-      const foundGroup = await GroupModel.findOne({ adminId: userId, slug });
-      if (!foundGroup) return returnStatus(res, 403);
-
-      await GroupModel.delete({ slug });
+      // const foundGroup = await GroupModel.findOne({ adminId: userId, slug });
+      // if (!foundGroup) return returnStatus(res, 403);
+      await GroupModel.deleteOne({ slug });
 
       return returnStatus(res, 200);
     } catch (err) {
@@ -121,19 +139,25 @@ class GroupController {
    * BODY { userId }
    */
   async addMember(req, res) {
-    const { userId } = req.body;
+    const { userId, usernames  } = req.body;
     const { slug } = req.params;
-    if (!userId || !slug) return returnStatus(res, 400);
+    if (!userId || !slug || !usernames) return returnStatus(res, 400);
 
     try {
       const foundGroup = await GroupModel.findOne({ slug });
+
       if (!foundGroup)
         return res.status(400).json({ message: 'Bad Request' });
+      
+      const memberList = await UserModel.find({username: {$in: usernames}, _id: {$ne: userId}})
 
-      await MemberModel.create({
-        userId,
-        groupId: foundGroup._id
-      })
+      const newMembers = memberList.map(value => ({
+        userId: value._id,
+        groupId: foundGroup._id,
+        isAdmin: false
+      }))
+
+      await MemberModel.insertMany(newMembers)
 
       return returnStatus(res, 200);
     } catch (err) {
@@ -144,7 +168,7 @@ class GroupController {
 
   /**
    * Get Member
-   * GET /api/group/get-members/:slug
+   * GET /api/group/:slug/member
    * BODY { userId }
    */
   async getMembers(req, res) {
@@ -180,7 +204,6 @@ class GroupController {
             users: 0,
             __v: 0,
             password: 0,
-            isAdmin: 0,
             groupId: 0,
           }
         }
@@ -194,14 +217,12 @@ class GroupController {
 
   /**
    * Delete Member
-   * DELETE /api/group/delete-member/:slug
-   * BODY { userId, deletedMemberId }
+   * DELETE /api/group/:slug/member/:memberId
    */
   async deleteMember(req, res) {
-    const { userId, deletedMemberId } = req.body;
-    const { slug } = req.params;
-
-    if (!userId || !slug || !deletedMemberId) return returnStatus(res, 400);
+    const { userId } = req.body;
+    const { slug, memberId } = req.params;
+    if (!userId || !slug || !memberId) return returnStatus(res, 400);
 
     try {
       const foundGroup = await GroupModel.aggregate([
@@ -214,14 +235,23 @@ class GroupController {
           }
         }, {
           $match: {
-            "members.userId": mongoose.Types.ObjectId(deletedMemberId),
+            "members.userId": mongoose.Types.ObjectId(memberId),
             slug,
-            adminId: mongoose.Types.ObjectId(userId)
+            $and: [
+              {adminId: mongoose.Types.ObjectId(userId)},
+              {adminId: {$ne: mongoose.Types.ObjectId(memberId)}}
+            ]
+          }
+        },
+        {
+          $project: {
+            _id: 1
           }
         }
       ]);
       if (foundGroup.length === 0) return returnStatus(res, 403);
-      await MemberModel.deleteOne({ userId: deletedMemberId });
+      await MemberModel.deleteOne({ userId: memberId, groupId: foundGroup[0]._id });
+      
       return returnStatus(res, 200);
 
     } catch (err) {

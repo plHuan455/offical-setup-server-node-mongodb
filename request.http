@@ -89,6 +89,11 @@ GET {{baseUrl}}/group/get-groups
 Authorization: bearer {{token}}
 Content-Type: application/json
 
+### Get Group by slug
+GET {{baseUrl}}/group/nhom-test-2
+Authorization: bearer {{token}}
+Content-Type: application/json
+
 ### Delete group
 DELETE {{baseUrl}}/group/delete-group/{{groupSlug}}
 Authorization: bearer {{token}}

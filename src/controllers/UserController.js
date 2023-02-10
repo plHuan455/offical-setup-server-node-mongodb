@@ -32,7 +32,8 @@ class UserController {
       if (!user) return returnStatus(res, 403);
 
       const jwtToken = await createToken({ userId: user._id, isAdmin: user.isAdmin });
-      return returnStatus(res, 200, { token: jwtToken, id: user._id, username: user.username, email: user.email, fullName: user.fullname});
+      const returnData = returnStatus(res, 200, { token: jwtToken, id: user._id, username: user.username, email: user.email, fullName: user.fullname});
+      return returnData;
 
     } catch (err) {
       console.log('[USER LOGIN ERROR]', err);
