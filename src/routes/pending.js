@@ -4,7 +4,7 @@ const router = express.Router();
 
 router.post('/', PendingController.create);
 router.get('/', PendingController.get);
-router.patch('/update', PendingController.update);
-router.delete('/delete-pending/:pendingId', PendingController.delete);
+router.put('/:pendingId', PendingController.update);
+router.delete('/:pendingId', PendingController.delete);
 
 export default router;

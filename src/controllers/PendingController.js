@@ -47,11 +47,12 @@ class PendingController {
 
   /**
    * Update a pending
-   * PATCH /api/pending/:slug
-   * BODY { userId, pendingId, content, date, money, bank }
+   * PUT /api/pending/:pendingId
+   * BODY { userId, content, date, money, bank }
    */
   async update(req, res) {
-    const { userId, pendingId, content, date, money, bank } = req.body;
+    const { userId, content, date, money, bank } = req.body;
+    const { pendingId } = req.params;
     if (!pendingId || !userId || (!content && !date && !money && !bank)) return returnStatus(res, 400);
     try {
       if (date && isNaN(new Date(date))) return returnStatus(res, 400);
@@ -152,7 +153,7 @@ class PendingController {
 
   /**
    * Delete pending
-   * DELETE /api/pending/delete-pending/:pendingId
+   * DELETE /api/pending/:pendingId
    * BODY { userId }
    */
   async delete(req, res) {
