@@ -36,7 +36,9 @@ class GroupController {
    */
   async getGroups(req, res) {
     const { userId } = req.body;
+    const { search } = req.query;
     try {
+      const searchRegex = new RegExp(search, 'gi');
       if (!userId) return res.returnStatus(res, 400);
       const response = await GroupModel.aggregate([
         {
@@ -48,7 +50,8 @@ class GroupController {
           }
         }, {
           $match: {
-            'members.userId': mongoose.Types.ObjectId(userId)
+            'members.userId': mongoose.Types.ObjectId(userId),
+            name: searchRegex
           }
         }, {
           $project: {
