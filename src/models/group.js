@@ -10,6 +10,7 @@ const groupSchema = new Schema(
         description: { type: String },
         avatarImg: { type: String },
         adminId: { type: Schema.Types.ObjectId, ref: 'user', required: true },
+        baseMoney: {type: Number, default: 0},
         slug: { type: String, slug: "name", unique: true },
     },
     {

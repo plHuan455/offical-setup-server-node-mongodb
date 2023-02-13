@@ -14,7 +14,7 @@ class PendingController {
     if (!groupId) return returnStatus(res, 400);
     try {
       const newDate = new Date(date);
-      if (isNaN(newDate)) return returnStatus(res, 400);
+      if (isNaN(newDate) || typeof money !== 'number') return returnStatus(res, 400);
       const foundGroup = await GroupModel.aggregate([
         {
           $lookup: {
@@ -28,18 +28,14 @@ class PendingController {
             _id: mongoose.Types.ObjectId(groupId),
             "members.userId": mongoose.Types.ObjectId(userId),
           }
-        }, {
-          $project: {
-            _id: 1
-          }
         }
       ])
 
-      if (!foundGroup) return returnStatus(res, 403);
-      await PendingModel.create({ content, bank, money, date: newDate, groupId })
-      return returnStatus(res, 200);
+      if (!foundGroup || foundGroup.length === 0) return returnStatus(res, 403);
+      const response = await PendingModel.create({ content, bank, money, date: newDate, groupId })
+      await GroupModel.updateOne({_id: foundGroup[0]._id}, {baseMoney: foundGroup[0].baseMoney + money})
+      return returnStatus(res, 200, response);
     } catch (err) {
-      console.log('[PENDING CREATE ERROR]', err);
 
       return returnStatus(res, 500);
     }
@@ -54,6 +50,7 @@ class PendingController {
     const { userId, content, date, money, bank } = req.body;
     const { pendingId } = req.params;
     if (!pendingId || !userId || (!content && !date && !money && !bank)) return returnStatus(res, 400);
+
     try {
       if (date && isNaN(new Date(date))) return returnStatus(res, 400);
       const foundPending = await PendingModel.aggregate([
@@ -83,16 +80,25 @@ class PendingController {
           }
         }, {
           $project: {
-            _id: 1
+            _id: 1,
+            "groups._id": 1,
+            "groups.baseMoney": 1,
           }
         }
       ]);
 
-      if (foundPending.length === 0) return returnStatus(res, 403);
+      if (foundPending.length === 0 || !foundPending[0].groups[0]._id) return returnStatus(res, 403);
 
-      await PendingModel.updateOne({ _id: pendingId }, { content, date: new Date(date), money, bank });
+      
+      const oldPending = await PendingModel.findOneAndUpdate({ _id: pendingId }, { content, date: new Date(date), money, bank });
 
-      return returnStatus(res, 200, foundPending);
+      
+      if(oldPending && money !== undefined) {
+        console.log({oldPending, money, foundPending: foundPending[0].groups, sum: foundPending[0].groups[0].baseMoney - oldPending.money + money})
+        await GroupModel.updateOne({_id: foundPending[0].groups[0]._id}, {baseMoney: foundPending[0].groups[0].baseMoney - oldPending.money + money })
+      }
+      
+      return returnStatus(res, 200, {oldPending, money, foundPending});
 
     } catch (err) {
       console.log('[PENDING UPDATE ERROR', err);

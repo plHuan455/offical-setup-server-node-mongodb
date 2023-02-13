@@ -11,11 +11,11 @@ class GroupController {
    * BODY { userId, name, description, avatarImg }
    */
   async create(req, res) {
-    const { userId, name, description, avatarImg } = req.body;
+    const { userId, name, description, avatarImg, baseMoney } = req.body;
     try {
       if (!userId || !name) return returnStatus(res, 400);
       const newGroup = await GroupModel.create({
-        name, description, avatarImg, adminId: userId
+        name, description, avatarImg, adminId: userId, baseMoney
       })
       await MemberModel.create({
         userId,
@@ -23,6 +23,32 @@ class GroupController {
         isAdmin: true
       })
       return returnStatus(res, 200, );
+    } catch (err) {
+      console.log(err);
+      return returnStatus( res, 500);
+    }
+  }
+
+  /** Update a group
+   * POST /api/group/:slug
+   * BODY { userId, name, description, avatarImg }
+   */
+  async update(req, res) {
+    const { userId, name, description, avatarImg, baseMoney } = req.body;
+    const { slug } = req.params;
+
+    try {
+      if (!userId || !slug) return returnStatus(res, 400);
+      const foundGroup = await GroupModel.findOne({slug});
+      if(!foundGroup) return returnStatus(404);
+      
+      const response = await GroupModel.findOneAndUpdate({slug}, {
+        name,
+        description,
+        avatarImg,
+        baseMoney,
+      }, {new: true})
+      return returnStatus(res, 200, response);
     } catch (err) {
       console.log(err);
       return returnStatus( res, 500);
