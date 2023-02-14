@@ -84,6 +84,7 @@ class GroupController {
             _id: 1,
             name: 1,
             description: 1,
+            baseMoney: 1,
             avatarImg: 1,
             adminId: 1,
             slug: 1,
@@ -105,6 +106,7 @@ class GroupController {
             description: 1,
             avatarImg: 1,
             adminId: 1,
+            baseMoney: 1,
             slug: 1,
             "members.fullname": 1
           }
