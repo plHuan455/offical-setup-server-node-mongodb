@@ -81,13 +81,39 @@ class WordController {
     const { userId } = req.body;
     const { wordId } = req.params;
 
-    if(!userId || !wordId) return returnStatus(res, 400);
-    try{
-      const response = await WordModel.deleteOne({userId, _id: wordId});
+    if (!userId || !wordId) return returnStatus(res, 400);
+    try {
+      const response = await WordModel.deleteOne({ userId, _id: wordId });
       return returnStatus(res, 200, response);
     }
-    catch(err) {
+    catch (err) {
       console.log(`[ERROR DELETE WORD]`, err);
+      return returnStatus(res, 500);
+    }
+  }
+
+  /**
+   * Action (increase,decrease priority)
+   * POST /api/word/action
+   */
+  async action(req, res) {
+    // ACTION = DECREASE | INCREASE
+    let { userId, wordId, action } = req.body;
+    try {
+      action = action.toUpperCase();
+      if (!userId || !wordId || !['DECREASE', 'INCREASE'].includes(action)) {
+        return returnStatus(res, 400);
+      }
+
+      const updatedWord = await WordModel.findOneAndUpdate(
+        { userId, _id: wordId },
+        { $inc: { priority: action === 'INCREASE' ? 1 : -1 } },
+        { new: true },
+      );
+      return returnStatus(res, 200, updatedWord);
+
+    } catch (err) {
+      console.log(`[ERROR WORD ACTION]`, err);
       return returnStatus(res, 500);
     }
   }

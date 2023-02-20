@@ -4,6 +4,7 @@ const router = express.Router();
 
 router.get('/', WordController.get);
 router.post('/', WordController.create);
+router.post('/action', WordController.action);
 router.put('/:wordId', WordController.update);
 router.delete('/:wordId', WordController.delete);
 
