@@ -3,6 +3,7 @@ const router = express.Router();
 import UserController from '../controllers/UserController.js';
 import tokenMiddleware from '../midlewares/tokenMidleware.js';
 
+router.get('/test', UserController.test);
 router.patch('/set-admin', UserController.setAdmin);
 router.post('/login', UserController.login);
 router.post('/register', UserController.register);

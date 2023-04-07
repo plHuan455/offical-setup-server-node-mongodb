@@ -2,6 +2,16 @@ import { createToken } from "../cores/handleToken.js";
 import returnStatus from "../cores/returnStatus.js";
 import UserModel from "../models/user.js";
 class UserController {
+
+  async test (req, res) {
+    try {
+      const response = await UserModel.find();
+      console.log('test')
+      return returnStatus(res, 200, response);
+    }catch(err) {
+      return returnStatus(res, 500);
+    }
+  }
   /**
    * Get User Data 
    * GET /api/user

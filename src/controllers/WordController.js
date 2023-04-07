@@ -10,7 +10,7 @@ class WordController {
     const { userId } = req.body;
     if (!userId) return returnStatus(res, 400);
     try {
-      const words = await WordModel.find({ userId });
+      const words = await WordModel.find({ userId }).sort({priority: -1, createdAt: 1});
       return returnStatus(res, 200, words);
     }
     catch (err) {
@@ -24,7 +24,7 @@ class WordController {
    * POST /api/word
    */
   async create(req, res) {
-    const { userId, word, mean, description, imgSrc } = req.body;
+    const { userId, word, mean, description, imgSrc, priority } = req.body;
 
     if (!userId) return returnStatus(res, 400);
     try {
@@ -49,7 +49,7 @@ class WordController {
    * PUT /api/word/:wordId
    */
   async update(req, res) {
-    const { userId, word, mean, description, imgSrc } = req.body;
+    const { userId, word, mean, description, imgSrc, priority } = req.body;
     const { wordId } = req.params;
 
     if (!userId || !wordId) return returnStatus(res, 400);
@@ -62,6 +62,7 @@ class WordController {
           mean,
           description,
           imgSrc,
+          priority,
         },
         { new: true }
       )
